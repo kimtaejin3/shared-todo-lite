@@ -87,10 +87,15 @@ function App() {
             <div className="flex flex-col items-center">
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                 todo.isActive 
-                  ? 'border-blue-500 bg-blue-500' 
+                  ? 'border-blue-500 bg-blue-500 animate-pulse' 
                   : 'border-blue-300 bg-white'
               }`}>
-                {todo.isActive && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                {todo.isActive && (
+                  <div className="relative">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-2 h-2 bg-white rounded-full animate-ping"></div>
+                  </div>
+                )}
               </div>
               {index < todos.length - 1 && (
                 <div className={`w-0.5 ${todo.isActive ? 'h-32' : 'h-24'} bg-blue-200 mt-2`}></div>
@@ -145,13 +150,18 @@ function App() {
       <div className="fixed bottom-6 left-0 right-0 max-w-md mx-auto px-6">
         <div className="bg-white rounded-3xl shadow-lg p-4 flex items-center justify-around">
           <button className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-100 transition-colors">
-            🕐
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" strokeWidth="2" />
+              <path d="M12 6v6l4 2" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </button>
           <button className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg hover:bg-blue-600 transition-colors -mt-8">
             +
           </button>
           <button className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
-            👤
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
           </button>
         </div>
       </div>
