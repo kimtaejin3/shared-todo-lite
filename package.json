@@ -1,13 +1,12 @@
 {
-    "name": "shared-todo-lite",
-    "private": true,
-    "workspaces": [
-      "apps/*",
-      "packages/*"
-    ],
-    "scripts": {
-      "dev:web": "yarn workspace web dev",
-      "dev:server": "yarn workspace server start:dev"
-    }
+  "name": "shared-todo-lite",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "yarn workspace web dev",
+    "dev:server": "yarn workspace server start:dev"
   }
-  
+}
