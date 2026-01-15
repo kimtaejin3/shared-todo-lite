@@ -89,7 +89,7 @@ function App() {
             <div className="flex flex-col items-center">
               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                 todo.isActive 
-                  ? 'border-blue-500 bg-blue-500 animate-pulse' 
+                  ? 'border-blue-500 bg-blue-500' 
                   : 'border-blue-300 bg-white'
               }`}>
                 {todo.isActive && (
