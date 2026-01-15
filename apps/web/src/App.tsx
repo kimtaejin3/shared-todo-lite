@@ -71,8 +71,10 @@ function App() {
               <p className={`text-lg font-semibold ${index === 5 ? 'text-blue-500' : 'text-gray-800'}`}>
                 {dates[index]}
               </p>
-              {index === 5 && (
+              {index === 5 ? (
                 <div className="w-1 h-1 bg-blue-500 rounded-full mx-auto mt-1"></div>
+              ) : (
+                <div className="w-1 h-1 rounded-full mx-auto mt-1"></div>
               )}
             </div>
           ))}
