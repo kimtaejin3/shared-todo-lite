@@ -100,7 +100,7 @@ function App() {
                 )}
               </div>
               {index < todos.length - 1 && (
-                <div className={`w-0.5 ${todo.isActive ? 'h-32' : 'h-24'} bg-blue-200 mt-2`}></div>
+                <div className={`w-0.5 ${todo.participants ? 'h-32' : 'h-24'} bg-blue-200 mt-2`}></div>
               )}
             </div>
 
