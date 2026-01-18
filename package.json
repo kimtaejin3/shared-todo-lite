@@ -6,7 +6,11 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "concurrently -n \"SERVER,WEB\" -c \"bgBlue.bold,bgMagenta.bold\" \"yarn dev:server\" \"yarn dev:web\"",
     "dev:web": "yarn workspace web dev",
     "dev:server": "yarn workspace server start:dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
