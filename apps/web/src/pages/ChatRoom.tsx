@@ -10,11 +10,11 @@ export default function ChatRoom() {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [otherUser, setOtherUser] = useState<{ id: string; username: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user, token, logout } = useAuth();
+  const socketRef = useRef<Socket | null>(null);
+  const { user, token } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +22,20 @@ export default function ChatRoom() {
       navigate('/friends');
       return;
     }
+
+    // 채팅방 정보 로드 함수
+    const loadChatRoomInfo = async () => {
+      try {
+        const rooms = await chatApi.getChatRooms();
+        const room = rooms.find((r) => r.id === chatRoomId);
+        if (room) {
+          const other = room.user1Id === user?.id ? room.user2 : room.user1;
+          setOtherUser({ id: other.id, username: other.username });
+        }
+      } catch (error) {
+        console.error('Failed to load chat room info:', error);
+      }
+    };
 
     // 소켓 연결
     const newSocket = io(SOCKET_URL, {
@@ -57,28 +71,16 @@ export default function ChatRoom() {
       }
     });
 
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     // 채팅방 정보 로드
     loadChatRoomInfo();
 
     return () => {
       newSocket.close();
+      socketRef.current = null;
     };
-  }, [token, chatRoomId, navigate]);
-
-  const loadChatRoomInfo = async () => {
-    try {
-      const rooms = await chatApi.getChatRooms();
-      const room = rooms.find((r) => r.id === chatRoomId);
-      if (room) {
-        const other = room.user1Id === user?.id ? room.user2 : room.user1;
-        setOtherUser({ id: other.id, username: other.username });
-      }
-    } catch (error) {
-      console.error('Failed to load chat room info:', error);
-    }
-  };
+  }, [token, chatRoomId, navigate, user?.id]);
 
   useEffect(() => {
     // 메시지가 추가될 때마다 스크롤을 맨 아래로
@@ -88,11 +90,11 @@ export default function ChatRoom() {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!inputMessage.trim() || !socket || !chatRoomId) {
+    if (!inputMessage.trim() || !socketRef.current || !chatRoomId) {
       return;
     }
 
-    socket.emit('sendMessage', {
+    socketRef.current.emit('sendMessage', {
       chatRoomId,
       message: inputMessage,
     });
