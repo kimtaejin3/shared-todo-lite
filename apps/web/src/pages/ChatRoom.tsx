@@ -12,6 +12,8 @@ export default function ChatRoom() {
   const [inputMessage, setInputMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [otherUser, setOtherUser] = useState<{ id: string; username: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actualChatRoomId, setActualChatRoomId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const { user, token } = useAuth();
@@ -23,17 +25,45 @@ export default function ChatRoom() {
       return;
     }
 
-    // 채팅방 정보 로드 함수
-    const loadChatRoomInfo = async () => {
+    // chatRoomId가 "new-{userId}" 형태인지 확인
+    const isNewChat = chatRoomId.startsWith('new-');
+    const targetUserId = isNewChat ? chatRoomId.replace('new-', '') : null;
+
+    // 채팅방 생성/조회 및 정보 로드 함수
+    const initializeChatRoom = async () => {
       try {
+        setIsLoading(true);
+        let roomId = chatRoomId;
+
+        // 새 채팅방인 경우 생성/조회
+        if (isNewChat && targetUserId) {
+          try {
+            const chatRoom = await chatApi.createOrGetChatRoom(targetUserId);
+            roomId = chatRoom.id;
+            setActualChatRoomId(roomId);
+            // URL을 실제 chatRoomId로 업데이트 (히스토리 교체)
+            navigate(`/chat/${roomId}`, { replace: true });
+          } catch (error) {
+            console.error('Failed to create/get chat room:', error);
+            alert('채팅을 시작할 수 없습니다.');
+            navigate('/friends');
+            return;
+          }
+        } else {
+          setActualChatRoomId(roomId);
+        }
+
+        // 채팅방 정보 로드
         const rooms = await chatApi.getChatRooms();
-        const room = rooms.find((r) => r.id === chatRoomId);
+        const room = rooms.find((r) => r.id === roomId);
         if (room) {
           const other = room.user1Id === user?.id ? room.user2 : room.user1;
           setOtherUser({ id: other.id, username: other.username });
         }
       } catch (error) {
         console.error('Failed to load chat room info:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -47,9 +77,6 @@ export default function ChatRoom() {
     newSocket.on('connect', () => {
       console.log('Connected to server');
       setIsConnected(true);
-
-      // 채팅방 조인
-      newSocket.emit('joinChatRoom', { chatRoomId });
     });
 
     newSocket.on('disconnect', () => {
@@ -58,29 +85,48 @@ export default function ChatRoom() {
     });
 
     // 채팅 히스토리 수신
-    newSocket.on('chatHistory', (data: { chatRoomId: string; messages: Message[] }) => {
-      if (data.chatRoomId === chatRoomId) {
-        setMessages(data.messages);
-      }
-    });
+    const handleChatHistory = (data: { chatRoomId: string; messages: Message[] }) => {
+      setActualChatRoomId((currentId) => {
+        if (currentId && data.chatRoomId === currentId) {
+          setMessages(data.messages);
+          setIsLoading(false);
+        }
+        return currentId;
+      });
+    };
 
     // 새 메시지 수신
-    newSocket.on('message', (message: Message) => {
-      if (message.chatRoomId === chatRoomId) {
-        setMessages((prev) => [...prev, message]);
-      }
-    });
+    const handleMessage = (message: Message) => {
+      setActualChatRoomId((currentId) => {
+        if (currentId && message.chatRoomId === currentId) {
+          setMessages((prev) => [...prev, message]);
+        }
+        return currentId;
+      });
+    };
+
+    newSocket.on('chatHistory', handleChatHistory);
+    newSocket.on('message', handleMessage);
 
     socketRef.current = newSocket;
 
-    // 채팅방 정보 로드
-    loadChatRoomInfo();
+    // 채팅방 초기화 및 정보 로드
+    initializeChatRoom();
 
     return () => {
+      newSocket.off('chatHistory', handleChatHistory);
+      newSocket.off('message', handleMessage);
       newSocket.close();
       socketRef.current = null;
     };
   }, [token, chatRoomId, navigate, user?.id]);
+
+  // actualChatRoomId가 설정되면 소켓으로 채팅방 조인
+  useEffect(() => {
+    if (actualChatRoomId && socketRef.current?.connected) {
+      socketRef.current.emit('joinChatRoom', { chatRoomId: actualChatRoomId });
+    }
+  }, [actualChatRoomId]);
 
   useEffect(() => {
     // 메시지가 추가될 때마다 스크롤을 맨 아래로
@@ -90,12 +136,12 @@ export default function ChatRoom() {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!inputMessage.trim() || !socketRef.current || !chatRoomId) {
+    if (!inputMessage.trim() || !socketRef.current || !actualChatRoomId) {
       return;
     }
 
     socketRef.current.emit('sendMessage', {
-      chatRoomId,
+      chatRoomId: actualChatRoomId,
       message: inputMessage,
     });
 
@@ -149,7 +195,12 @@ export default function ChatRoom() {
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="max-w-4xl mx-auto space-y-4">
-          {messages.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center text-gray-500 py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <p className="mt-2">채팅방을 불러오는 중...</p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               메시지가 없습니다. 대화를 시작해보세요!
             </div>

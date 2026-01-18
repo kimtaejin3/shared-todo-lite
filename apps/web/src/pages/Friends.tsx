@@ -10,15 +10,6 @@ export default function Friends() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
-    }
-
-    loadData();
-  }, [token, navigate]);
-
   const loadData = async () => {
     try {
       const [usersData, roomsData] = await Promise.all([
@@ -27,12 +18,17 @@ export default function Friends() {
       ]);
       setUsers(usersData);
       setChatRooms(roomsData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load data:', error);
-      if (error.response?.status === 401) {
-        // 인증 실패 시 로그아웃
-        logout();
-        navigate('/');
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { status?: number } };
+        if (apiError.response?.status === 401) {
+          // 인증 실패 시 로그아웃
+          logout();
+          navigate('/');
+        } else {
+          alert('데이터를 불러오는데 실패했습니다. 새로고침해주세요.');
+        }
       } else {
         alert('데이터를 불러오는데 실패했습니다. 새로고침해주세요.');
       }
@@ -41,14 +37,19 @@ export default function Friends() {
     }
   };
 
-  const handleStartChat = async (userId: string) => {
-    try {
-      const chatRoom = await chatApi.createOrGetChatRoom(userId);
-      navigate(`/chat/${chatRoom.id}`);
-    } catch (error) {
-      console.error('Failed to start chat:', error);
-      alert('채팅을 시작할 수 없습니다.');
+  useEffect(() => {
+    if (!token) {
+      navigate('/');
+      return;
     }
+
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, navigate]);
+
+  const handleStartChat = (userId: string) => {
+    // 즉시 navigate - ChatRoom에서 chatRoom 생성/조회 처리
+    navigate(`/chat/new-${userId}`);
   };
 
   const handleOpenChatRoom = (chatRoomId: string) => {
@@ -149,7 +150,7 @@ export default function Friends() {
                 <button
                   key={friend.id}
                   onClick={() => handleStartChat(friend.id)}
-                  className="w-full px-4 py-4 hover:bg-gray-50 transition-colors text-left flex items-center justify-between"
+                  className="w-full px-4 py-4 hover:bg-gray-50 transition-colors text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
