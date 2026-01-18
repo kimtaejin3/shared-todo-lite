@@ -1,8 +1,15 @@
 import axios from 'axios';
-import type { LoginRequest, RegisterRequest, AuthResponse } from '@shared';
+import type {
+  LoginDto,
+  RegisterDto,
+  AuthResponseDto,
+  UserDto,
+  ChatRoomResponseDto,
+  MessageResponseDto,
+  CreateChatRoomDto,
+} from '../generated/api';
 
 const API_URL = 'http://localhost:3000';
-
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -19,62 +26,44 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export interface User {
-  id: string;
-  username: string;
-  createdAt: string;
-}
-
-export interface ChatRoom {
-  id: string;
-  user1: User;
-  user2: User;
-  user1Id: string;
-  user2Id: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Message {
-  id: string;
-  username: string;
-  message: string;
-  timestamp: Date;
-  chatRoomId: string;
-}
+// 타입 별칭 (기존 코드 호환성)
+export type User = UserDto;
+export type ChatRoom = ChatRoomResponseDto;
+export type Message = MessageResponseDto;
 
 export const authApi = {
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', data);
+  register: async (data: RegisterDto): Promise<AuthResponseDto> => {
+    const response = await api.post<AuthResponseDto>('/auth/register', data);
     return response.data;
   },
 
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login', data);
+  login: async (data: LoginDto): Promise<AuthResponseDto> => {
+    const response = await api.post<AuthResponseDto>('/auth/login', data);
     return response.data;
   },
 };
 
 export const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    const response = await api.get<User[]>('/users');
+  getAll: async (): Promise<UserDto[]> => {
+    const response = await api.get<UserDto[]>('/users');
     return response.data;
   },
 };
 
 export const chatApi = {
-  getChatRooms: async (): Promise<ChatRoom[]> => {
-    const response = await api.get<ChatRoom[]>('/chat/rooms');
+  getChatRooms: async (): Promise<ChatRoomResponseDto[]> => {
+    const response = await api.get<ChatRoomResponseDto[]>('/chat/rooms');
     return response.data;
   },
 
-  createOrGetChatRoom: async (userId: string): Promise<ChatRoom> => {
-    const response = await api.post<ChatRoom>('/chat/rooms', { userId });
+  createOrGetChatRoom: async (userId: string): Promise<ChatRoomResponseDto> => {
+    const createDto: CreateChatRoomDto = { userId };
+    const response = await api.post<ChatRoomResponseDto>('/chat/rooms', createDto);
     return response.data;
   },
 
-  getMessages: async (chatRoomId: string): Promise<Message[]> => {
-    const response = await api.get<Message[]>(
+  getMessages: async (chatRoomId: string): Promise<MessageResponseDto[]> => {
+    const response = await api.get<MessageResponseDto[]>(
       `/chat/rooms/${chatRoomId}/messages`,
     );
     return response.data;

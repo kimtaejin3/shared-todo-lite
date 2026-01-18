@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
-import { LoginRequest, RegisterRequest, AuthResponse } from '@shared';
+import { LoginDto, RegisterDto, AuthResponseDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +11,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterRequest): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { username, password } = registerDto;
 
     // 사용자 존재 여부 확인
@@ -39,7 +39,7 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginRequest): Promise<AuthResponse> {
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { username, password } = loginDto;
 
     // 사용자 찾기

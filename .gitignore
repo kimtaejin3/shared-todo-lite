@@ -1,1 +1,5 @@
 /node_modules
+openapi.json
+*.log
+dist/
+build/

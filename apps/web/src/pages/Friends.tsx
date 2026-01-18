@@ -160,9 +160,11 @@ export default function Friends() {
                       <div className="font-semibold text-gray-800">
                         {friend.username}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(friend.createdAt).toLocaleDateString('ko-KR')}
-                      </div>
+                        <div className="text-sm text-gray-500">
+                          {friend.createdAt
+                            ? new Date(friend.createdAt).toLocaleDateString('ko-KR')
+                            : ''}
+                        </div>
                     </div>
                   </div>
                   <svg

@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { User } from '@shared';
+import type { UserDto } from '../generated/api';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserDto | null;
   token: string | null;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: UserDto) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -13,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDto | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = (newToken: string, newUser: UserDto) => {
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem('token', newToken);
